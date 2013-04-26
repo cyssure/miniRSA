@@ -71,7 +71,7 @@ long compute_d(long e, long m) {
   MiniRSA rsa;
   return rsa.mod_inverse(e, m);
 }
-
+/**
 int main(int argc, char** argv) {
   cout << "Enter the nth prime and the mth prime to compute" << endl;
   string line;
@@ -95,3 +95,4 @@ int main(int argc, char** argv) {
   cout << "Public Key = (" << e << ", " << c << "), ";
   cout << "Private Key = (" << d << ", " << c << ")" << endl;
 }
+**/
