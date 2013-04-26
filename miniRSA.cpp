@@ -38,7 +38,7 @@ long MiniRSA::totient(long n) {
   for (i = 1; i < n; i++) {
     if (GCD(i, n) == 1) tot++; 
   }
-  cout << "totient is " << tot << endl;
+  //  cout << "totient is " << tot << endl;
   return tot;
 }
 /**

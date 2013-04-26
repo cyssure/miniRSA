@@ -1,2 +1,2 @@
 all:
-	g++ miniRSA.cpp test.cpp
+	g++ miniRSA.cpp Encryption.cpp
