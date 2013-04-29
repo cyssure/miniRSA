@@ -1,3 +1,7 @@
+/**
+ *This program demos a process of cracking keys
+ *Author: Yushu Cao, April 28, 2013
+ */
 #include "Encrypt.h"
 #include "Encryption.h"
 #include "miniRSA.h"
@@ -6,6 +10,9 @@
 
 using namespace std;
 
+/**
+ *Look for an appropriate m 
+ */
 long try_m(int a, int b, long e) {
   long m = (a - 1) * (b - 1);
   MiniRSA rsa;
@@ -22,6 +29,9 @@ long try_m(int a, int b, long e) {
   
 }
 
+/**
+ *Crack the keys by bruteforce
+ */
 long bruteforce(long e, long c) {
   Encryption en;
   int i = 2;
@@ -40,6 +50,10 @@ long bruteforce(long e, long c) {
   return -1;
 }
 
+
+/**
+ *This is where the program starts to run
+ */
 int main(int argc, char** argv) {
   cout << "Enter the public key value" << endl;
   string input;
@@ -66,5 +80,6 @@ int main(int argc, char** argv) {
     cout << "It is " << (char) decrypt << endl;
 
   }
+  cout << "Done" << endl;
   exit(0);
 }

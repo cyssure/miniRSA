@@ -1,3 +1,7 @@
+/**
+ *This is the class encrypt messages
+ *Author: Yushu Cao, April 28, 2013
+ */
 #include "miniRSA.h"
 #include "Encrypt.h"
 #include <stdlib.h>
@@ -15,37 +19,49 @@ Encrypt::Encrypt(long e, long c) {
   C = c;
 }
 
-
+/**
+ *Generate keys according the given numbers, which refer to the nth prime
+ */
 int Encrypt::generate_keys(int x, int y) {
   int first = x;
   int second = y;
   encryption.generate_primes(&first, &second);
-  //  cout << "First prime is " << first << " Second prime is "<< second << endl;
+
   C = encryption.compute_c(first, second);
   M = encryption.compute_m(first, second);
   E = encryption.compute_key(M);
   D = encryption.compute_d(E, M);
-  //cout << "Public Key " << C << ", " << E << endl;
-  //cout << "Private Key" << D << ", " << E << endl;
+
   return 0;
 }
 
+/**
+ *Encrypt a char
+ */
 int Encrypt::encrypt_char(int msg) {
   return rsa.modulo(msg, E, C);
 }
 
+/**
+ *Encrypt a char with additional given keys
+ */
 int Encrypt::encrypt_char(int msg, long e, long c) {
   MiniRSA rsa;
   return rsa.modulo(msg, e, c);
 }
 
+/**
+ *Decrypt a char
+ */
 int Encrypt::decrypt_char(int msg) {
   MiniRSA rsa;
   int res = rsa.modulo(msg, D, C);
-  //  cout << (char) res << " " << res;
   return res;
 }
 
+/**
+ *Encrypt a sentence
+ */
 int * Encrypt::encrypt_sen(string msg) {
   int i;
   int * result = new int[msg.size()];
@@ -57,16 +73,25 @@ int * Encrypt::encrypt_sen(string msg) {
   
 }
 
+/**
+ *Set the public key
+ */
 void Encrypt::set_public(long e, long c) {
   E = e;
   C = c;
 }
 
+/**
+ *Set the private key
+ */
 void Encrypt::set_private(long d, long c) {
   D = d;
   C = c;
 }
 
+/**
+ *Get the public key
+ */
 int * Encrypt::get_public() {
   int * publics = new int[2];
   publics[0] = E;
@@ -74,44 +99,3 @@ int * Encrypt::get_public() {
   return publics;
 }
  
-
-/**
-int main(int argc, char** argv) {
-  cout << "Please enter the public key (e, c): first e, then c" << endl;
-  string line;
-  getline(cin, line);
-  int p1 = line.find(" ", 0);
-  if (p1 == string::npos) {
-    cout << "Please enter a white space between two numbers" << endl;
-    exit(0);
-  }
-
-  int first_num = atoi(line.substr(0, p1).c_str());
-  int second_num = atoi(line.substr(p1 + 1, string::npos).c_str());
-  Encrypt encrypt;
-  encrypt.set_public(first_num, second_num);
-  cout << "Please enter a sentence to encrypt" << endl;
-  getline(cin, line);
-  encrypt.encrypt_sen(line);
-  cout << "Please enter the private key (d, c): first d, then c" << endl;
-  getline(cin, line);
-
-  p1 = line.find(" ", 0);
-  if (p1 == string::npos) {
-    cout << "Please enter a white space between two numbers" << endl;
-    exit(0);
-  }
-  first_num = atoi(line.substr(0, p1).c_str());
-  second_num = atoi(line.substr(p1 + 1, string::npos).c_str());
-  encrypt.set_private(first_num, second_num);
-  while (1) {
-    cout << "Enter next char cipher value as an int, type quit to quit" << endl;
-    getline(cin, line);
-    if (strcmp(line.c_str(), "quit") == 0) { 
-      break;
-    }
-    encrypt.decrypt_char(atoi(line.c_str()));
-  }
-}
-
-**/

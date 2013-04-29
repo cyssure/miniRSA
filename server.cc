@@ -1,5 +1,6 @@
 /**
  *This is the program for a RSA chat server.
+ *Author: Yushu Cao, April 28, 2013
  */
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -20,6 +21,7 @@
 using namespace std;
 
 #define MAXLINE 1024
+
 /**
  *This is the argument struct passed to each thread
  */
@@ -29,29 +31,12 @@ struct args {
   int port_num;
 };
 
-pthread_mutex_t mutex;//Prevent race condition when writing log
 Encrypt s_encrypt;
 Encrypt s_decrypt;
 
-
-int read_line(int fd, char * input) {
-  int n;
-  char c;
-  char * buf = input;
-  int read_n;
-  for (n = 1; n < MAXLINE; n++) {
-    if ((read_n = read(fd, &c, 1)) == 1) {
-      *buf++ = c;
-      if (c == '\n') break;
-    } else if (read_n == 0) {
-      if (n == 1) return 0;
-      else break;
-    } else return -1;
-  }
-  *buf = 0;
-  return n;
-}
-
+/**
+ *Parse the key sent by the client
+ */
 int parse_keys(char input[]) {
   string input_str(input);//convert the char array into a C++ string
   int p1 = input_str.find(" ", 0);
@@ -64,6 +49,9 @@ int parse_keys(char input[]) {
   return 0;
 }
 
+/**
+ *Decrypt the sentence sent by the client with the server's own private key
+ */
 void de_sentence(char input[], char buf[]) {
   int msg_length = strlen(input);
   memset(buf, 0, MAXLINE);
@@ -72,7 +60,7 @@ void de_sentence(char input[], char buf[]) {
   char * ptr;
   ptr = strtok(input, " ");
   while (ptr != NULL) {
-    de_value = s_decrypt.decrypt_char(atoi(ptr));//decrypt an integer                                                          
+    de_value = s_decrypt.decrypt_char(atoi(ptr));//decrypt an integer                    
     sprintf(temp, "%c", de_value);
     strcat(buf, temp);
     ptr = strtok(NULL, " ");
@@ -82,6 +70,9 @@ void de_sentence(char input[], char buf[]) {
   fflush(stdout);
 }
 
+/**
+ *Read from the socket connecting to the client
+ */
 void* readFrom2(void * arg) {
   struct args * my_arg = (struct args *) arg;
   int n;
@@ -99,25 +90,10 @@ void* readFrom2(void * arg) {
   exit(0);
 }
 
-void* readFrom(void * arg) {
-  struct args * my_arg = (struct args * ) arg;
-  //  char buf[MAXLINE];
-  //rio_t rio;
-  //(&rio, my_arg->connfd);//initialize
-  int n;
-  char input[MAXLINE];
-  char buf[MAXLINE];
 
-  while (1) {
-    n = read_line(my_arg->connfd, input);
-    if (n <= 0) break;
-    cout << input;
-    de_sentence(input, buf);
-    if (strcmp(buf, ".bye\n") == 0) break;
-  }
-  exit(0);
-}
-
+/**
+ *Encrypt the sentence typed by the user with the client's public key
+ */
 void en_sentence(char input[], char buf[]) {
   int msg_length = strlen(input);
   memset(buf, 0, sizeof(buf));
@@ -134,6 +110,9 @@ void en_sentence(char input[], char buf[]) {
 
 }
 
+/**
+ *Get the client's public keys
+ */
 void* read_public(void * arg) {
   struct args * my_arg = (struct args *) arg;
   int n;
@@ -141,7 +120,7 @@ void* read_public(void * arg) {
   memset(input, 0, MAXLINE);
 
   n = read(my_arg->connfd, input, MAXLINE);
-  cout << "Read public" << input << endl;
+  cout << "Read public " << input << endl;
   if (parse_keys(input) == -1) {
     cout << "Error when parsing public keys" << endl;
     exit(1);
@@ -149,6 +128,9 @@ void* read_public(void * arg) {
   pthread_exit(0);
 }
 
+/**
+ *Send the server's public key to the client
+ */
 void * send_public (void * arg) {
   struct args * my_arg = (struct args *) arg;
 
@@ -236,15 +218,14 @@ int main (int argc, char** argv) {
   serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   serv_addr.sin_port = htons(port);
 
-  //  memset()
-  //  listenfd = open_listenfd(port);
+
   cout << "Binding to port " << port << ", please wait ..." << endl;
   bind(listenfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
   listen(listenfd, 10);
 
   cout << "Server started: localport " << port << endl;
   cout << "Waiting for a client ..." << endl;
-  printf("The server is waiting for a request\n");
+
   struct sockaddr_in client_addr;
   clientlen = sizeof(client_addr);
   
@@ -252,27 +233,21 @@ int main (int argc, char** argv) {
   initial_encrypt(&s_decrypt);//initial my public keys and private keys
   
   connfd = accept(listenfd, (struct sockaddr*)&client_addr, (socklen_t*)&clientlen);
-  //while (1) {
-  //clientlen = sizeof(clientaddr);
-  
-  //    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-  //  cout << "Client accepted: ";
-    //    printf("The server accepted a request\n");
-    hp = gethostbyaddr((const char *) &client_addr.sin_addr.s_addr, sizeof(client_addr.sin_addr.s_addr), AF_INET);
-    haddrp = inet_ntoa(client_addr.sin_addr);
-    cout << "Client accepted: Socket[addr=/" << haddrp << ", port=" << client_addr.sin_port << "]" << endl;//print the client address 
-    printf("server connected to %s (%s)\n", hp->h_name, haddrp);
-    struct args * para = (struct args *) malloc(sizeof(struct args));
-    para->connfd = connfd;
-    para->ip = (char * )malloc( sizeof (char) * (strlen(haddrp) + 1));//copy ip addr
-    strcpy(para->ip, haddrp);
-    para->port_num = client_addr.sin_port;
-    pthread_t  * thread = (pthread_t *) malloc(sizeof(pthread_t));
-
-    pthread_create(thread, NULL, routine, (void *)para);
+  hp = gethostbyaddr((const char *) &client_addr.sin_addr.s_addr, sizeof(client_addr.sin_addr.s_addr), AF_INET);
+  haddrp = inet_ntoa(client_addr.sin_addr);
+  cout << "Client accepted: Socket[addr=/" << haddrp << ", port=" << client_addr.sin_port << "]" << endl;//print the client address 
+  printf("server connected to %s (%s)\n", hp->h_name, haddrp);
+  struct args * para = (struct args *) malloc(sizeof(struct args));
+  para->connfd = connfd;
+  para->ip = (char * )malloc( sizeof (char) * (strlen(haddrp) + 1));//copy ip addr
+  strcpy(para->ip, haddrp);
+  para->port_num = client_addr.sin_port;
+  pthread_t  * thread = (pthread_t *) malloc(sizeof(pthread_t));
     
-    pthread_join(*thread, NULL);
-    //  }
-
+  pthread_create(thread, NULL, routine, (void *)para);
+  
+  pthread_join(*thread, NULL);
+  
+  
   return 0;
 } 
