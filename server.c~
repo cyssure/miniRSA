@@ -1,0 +1,111 @@
+/**
+ *This is the program for a RSA chat server.
+ */
+#include "csapp.h"
+#include "miniRSA.h"
+#include <time.h>
+
+/**
+ *This is the argument struct passed to each thread
+ */
+struct args {
+  int connfd;
+  char * ip;
+  int port_num;
+};
+
+pthread_mutex_t mutex;//Prevent race condition when writing log
+
+
+
+
+
+/**
+ *This is the routine that each thread will run
+ */
+void* routine (void * arg) {
+  struct args * my_arg = (struct args *) arg;
+  char buf[MAXLINE];
+  rio_t rio;
+  Rio_readinitb(&rio, my_arg->connfd);//initialize
+
+  int i = 3;
+  char temp_buf[100];
+  int b_index = 0;
+  int n;
+  char* page = NULL;
+  //  char* pro = NULL;
+  char* host = NULL;
+
+  while (1) { 
+    n = Rio_readlineb(&rio, temp_buf, 100);
+    //    printf("Readin: %s", temp_buf);
+    int j;
+    for (j = 0; j < n; j++) {
+      buf[b_index] = temp_buf[j];
+      b_index++;
+    }
+    if (strcmp(temp_buf, "\r\n") == 0) break;
+  }
+
+  buf[b_index] = 0;
+  pthread_mutex_lock(&mutex);
+  save_log(buf, my_arg);
+  pthread_mutex_unlock(&mutex);
+  host = parse_host(buf);
+  page = parse_page(buf);
+  if (strcmp(host, "localhost") == 0) {
+    //the client requests the server itself
+    service(page + 1, &rio, my_arg->connfd, buf);
+  } else {
+    //the client requests a third-party web host
+    send_if_modify(my_arg->connfd, host, page, buf);
+  } 
+  close(my_arg->connfd);
+  //  printf("IP: %s, Port: %d\n", my_arg->ip, my_arg->port_num);
+  free(my_arg->ip);
+  free(my_arg);
+  free(host);
+  free(page);
+
+}
+
+
+/**
+ *This is where the program starts from
+ */
+int main (int argc, char** argv) {
+  if (argc < 2) {
+    printf("usage: server <port_num>\n");
+    return 0;
+  }
+  pthread_mutex_init(&mutex, NULL);//initialize the mutex
+ 
+  int listenfd, connfd, port, clientlen;
+  struct sockaddr_in clientaddr;
+  struct hostent *hp;
+  char *haddrp;
+  
+  port = atoi(argv[1]);
+  listenfd = open_listenfd(port);
+  while (1) {
+    clientlen = sizeof(clientaddr);
+    printf("The server is waiting for a request\n");
+    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+    printf("The server accepted a request\n");
+    hp = Gethostbyaddr((const char *) &clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
+    haddrp = inet_ntoa(clientaddr.sin_addr);
+    printf("server connected to %s (%s)\n", hp->h_name, haddrp);
+    struct args * para = (struct args *) malloc(sizeof(struct args));
+    para->connfd = connfd;
+    para->ip = (char * )malloc( sizeof (char) * (strlen(haddrp) + 1));//copy ip addr
+    strcpy(para->ip, haddrp);
+    para->port_num = clientaddr.sin_port;
+    pthread_t * thread = (pthread_t *) malloc(sizeof(pthread_t));
+
+    pthread_create(thread, NULL, routine, (void *)para);
+    
+  }
+
+  return 0;
+} 

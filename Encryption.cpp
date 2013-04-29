@@ -1,4 +1,5 @@
 #include "miniRSA.h"
+#include "Encryption.h"
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,7 +7,15 @@
 
 using namespace std;
 
-int isPrime(int n) {
+Encryption::Encryption() {
+
+}
+
+Encryption::~Encryption() {
+
+}
+
+int Encryption::isPrime(int n) {
   if (n == 1) return 0;
   if (n == 2 || n == 3) return 1;
   if (n % 2 == 0) return 0;
@@ -18,11 +27,11 @@ int isPrime(int n) {
   return 1;
 }
 
-int generate_primes(int* nth, int *mth) {
+int Encryption::generate_primes(int* nth, int *mth) {
   int first, second;
   first = *nth < *mth ? *nth : *mth;
   second = *nth < *mth ? *mth : *nth;
-  cout << first << "th prime = ";
+  //  cout << first << "th prime = ";
   int i = 0;
   int temp = 1;
   long result = 0;
@@ -36,8 +45,8 @@ int generate_primes(int* nth, int *mth) {
     temp++;
   }
   first = temp - 1;
-  cout << first << ", ";
-  cout << second << "th prime = ";
+  //cout << first << ", ";
+  //cout << second << "th prime = ";
   //  temp++;
   while (i <= second) {
     if (isPrime(temp) == 1) {
@@ -54,20 +63,20 @@ int generate_primes(int* nth, int *mth) {
   return 0;
 }
 
-long compute_c(int a, int b) {
+long Encryption::compute_c(int a, int b) {
   return a * b;
 }
 
-long compute_m(int a, int b) {
+long Encryption::compute_m(int a, int b) {
   return (a - 1) * (b - 1);
 }
 
-long compute_key(long m) {
+long Encryption::compute_key(long m) {
   MiniRSA rsa;
   return rsa.coprime(m);
 }
 
-long compute_d(long e, long m) {
+long Encryption::compute_d(long e, long m) {
   MiniRSA rsa;
   return rsa.mod_inverse(e, m);
 }

@@ -8,74 +8,8 @@
 
 using namespace std;
 
-Encrypt::Encrypt() {}
-
-Encrypt::Encrypt(long e, long c) {
-  E = e;
-  C = c;
-}
 
 
-int Encrypt::generate_keys(int x, int y) {
-  int first = x;
-  int second = y;
-  encryption.generate_primes(&first, &second);
-  //  cout << "First prime is " << first << " Second prime is "<< second << endl;
-  C = encryption.compute_c(first, second);
-  M = encryption.compute_m(first, second);
-  E = encryption.compute_key(M);
-  D = encryption.compute_d(E, M);
-  //cout << "Public Key " << C << ", " << E << endl;
-  //cout << "Private Key" << D << ", " << E << endl;
-  return 0;
-}
-
-int Encrypt::encrypt_char(int msg) {
-  return rsa.modulo(msg, E, C);
-}
-
-int Encrypt::encrypt_char(int msg, long e, long c) {
-  MiniRSA rsa;
-  return rsa.modulo(msg, e, c);
-}
-
-int Encrypt::decrypt_char(int msg) {
-  MiniRSA rsa;
-  int res = rsa.modulo(msg, D, C);
-  //  cout << (char) res << " " << res;
-  return res;
-}
-
-int * Encrypt::encrypt_sen(string msg) {
-  int i;
-  int * result = new int[msg.size()];
-  for (i = 0; i < msg.size(); i++) {
-    result[i] = encrypt_char((int)msg.at(i), E, C);
-    cout << result[i] << endl;
-  }
-  return result;
-  
-}
-
-void Encrypt::set_public(long e, long c) {
-  E = e;
-  C = c;
-}
-
-void Encrypt::set_private(long d, long c) {
-  D = d;
-  C = c;
-}
-
-int * Encrypt::get_public() {
-  int * publics = new int[2];
-  publics[0] = E;
-  publics[1] = C;
-  return publics;
-}
- 
-
-/**
 int main(int argc, char** argv) {
   cout << "Please enter the public key (e, c): first e, then c" << endl;
   string line;
@@ -113,5 +47,3 @@ int main(int argc, char** argv) {
     encrypt.decrypt_char(atoi(line.c_str()));
   }
 }
-
-**/
